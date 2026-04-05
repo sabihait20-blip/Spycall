@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { db } from '../lib/firebase';
-import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, getDoc, setDoc, deleteDoc, getDocs } from 'firebase/firestore';
-import { PhoneOff, Mic, MicOff, Video, VideoOff, Volume2, VolumeX, User as UserIcon } from 'lucide-react';
+import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, Volume2, VolumeX, User as UserIcon, Camera, Settings } from 'lucide-react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { CallSession, UserProfile } from '../types';
 import { cn } from '../lib/utils';
@@ -29,6 +29,8 @@ export default function CallWindow({ call, currentUser, onEnd }: CallWindowProps
   const [isVideoOff, setIsVideoOff] = useState(call.type === 'audio');
   const [isLoudspeaker, setIsLoudspeaker] = useState(true);
   const [callDuration, setCallDuration] = useState(0);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [videoQuality, setVideoQuality] = useState<'low' | 'medium' | 'high'>('medium');
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const pc = useRef<RTCPeerConnection | null>(null);
@@ -55,12 +57,10 @@ export default function CallWindow({ call, currentUser, onEnd }: CallWindowProps
       handleFirestoreError(e, OperationType.GET, `calls/${call.id}`);
     });
 
-    // Start timer
     const timer = setInterval(() => {
       setCallDuration(prev => prev + 1);
     }, 1000);
 
-    // Initialize WebRTC
     setupWebRTC();
 
     return () => {
@@ -71,29 +71,40 @@ export default function CallWindow({ call, currentUser, onEnd }: CallWindowProps
     };
   }, [call.id]);
 
-  const setupWebRTC = async () => {
+  const getConstraints = (mode: 'user' | 'environment', quality: 'low' | 'medium' | 'high') => {
+    const qualityConstraints = {
+      low: { width: { ideal: 320 }, height: { ideal: 240 } },
+      medium: { width: { ideal: 640 }, height: { ideal: 480 } },
+      high: { width: { ideal: 1280 }, height: { ideal: 720 } },
+    };
+    return {
+      video: {
+        facingMode: mode,
+        ...qualityConstraints[quality]
+      },
+      audio: true
+    };
+  };
+
+  const setupWebRTC = async (mode: 'user' | 'environment' = 'user', quality: 'low' | 'medium' | 'high' = 'medium') => {
+    if (pc.current) {
+      pc.current.close();
+    }
+    
     pc.current = new RTCPeerConnection(servers);
 
-    // Get local media
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: call.type === 'video',
-      audio: true
-    });
+    const stream = await navigator.mediaDevices.getUserMedia(getConstraints(mode, quality));
     setLocalStream(stream);
     if (localVideoRef.current) {
       localVideoRef.current.srcObject = stream;
     }
 
-    // Push tracks from local stream to peer connection
     stream.getTracks().forEach((track) => {
       pc.current?.addTrack(track, stream);
     });
 
-    // Pull tracks from remote stream, add to video stream
     pc.current.ontrack = (event) => {
-      event.streams[0].getTracks().forEach((track) => {
-        setRemoteStream(event.streams[0]);
-      });
+      setRemoteStream(event.streams[0]);
     };
 
     const callDoc = doc(db, 'calls', call.id);
@@ -183,6 +194,8 @@ export default function CallWindow({ call, currentUser, onEnd }: CallWindowProps
       };
     }
   };
+  
+  // ... (rest of the component)
 
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
@@ -254,13 +267,13 @@ export default function CallWindow({ call, currentUser, onEnd }: CallWindowProps
       className="fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center text-white"
     >
       {/* Remote Video / Avatar */}
-      <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+      <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-slate-950">
         {call.type === 'video' && remoteStream ? (
           <video 
             ref={remoteVideoRef} 
             autoPlay 
             playsInline 
-            className="w-full h-full object-cover opacity-80"
+            className="w-full h-full object-cover"
           />
         ) : (
           <div className="flex flex-col items-center">
@@ -278,22 +291,26 @@ export default function CallWindow({ call, currentUser, onEnd }: CallWindowProps
           </div>
         )}
 
-        {/* Local Video Preview */}
+        {/* Local Video Picture-in-Picture */}
         {call.type === 'video' && (
-          <div className="absolute top-10 right-10 w-48 h-64 bg-slate-900 rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+          <motion.div 
+            drag
+            dragConstraints={{ left: -200, right: 200, top: -200, bottom: 200 }}
+            className="absolute bottom-24 right-6 w-32 h-48 bg-slate-900 rounded-2xl border-2 border-white/20 shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing z-20"
+          >
             <video 
               ref={localVideoRef} 
               autoPlay 
               playsInline 
               muted 
-              className="w-full h-full object-cover grayscale"
+              className="w-full h-full object-cover"
             />
             {isVideoOff && (
               <div className="absolute inset-0 bg-slate-900 flex items-center justify-center">
                 <VideoOff className="w-8 h-8 text-slate-700" />
               </div>
             )}
-          </div>
+          </motion.div>
         )}
       </div>
 
@@ -333,6 +350,34 @@ export default function CallWindow({ call, currentUser, onEnd }: CallWindowProps
         >
           {isLoudspeaker ? <Volume2 className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
         </button>
+
+        {call.type === 'video' && (
+          <>
+            <button 
+              onClick={() => {
+                const newMode = facingMode === 'user' ? 'environment' : 'user';
+                setFacingMode(newMode);
+                setupWebRTC(newMode, videoQuality);
+              }}
+              className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-all active:scale-90"
+              title="Switch Camera"
+            >
+              <Camera className="w-6 h-6" />
+            </button>
+            <button 
+              onClick={() => {
+                const qualities: ('low' | 'medium' | 'high')[] = ['low', 'medium', 'high'];
+                const nextQuality = qualities[(qualities.indexOf(videoQuality) + 1) % qualities.length];
+                setVideoQuality(nextQuality);
+                setupWebRTC(facingMode, nextQuality);
+              }}
+              className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-all active:scale-90"
+              title={`Video Quality: ${videoQuality.toUpperCase()}`}
+            >
+              <Settings className="w-6 h-6" />
+            </button>
+          </>
+        )}
 
         <button 
           onClick={handleEndCall}
