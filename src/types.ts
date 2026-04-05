@@ -32,4 +32,7 @@ export interface CallSession {
   type: 'audio' | 'video';
   offer?: any;
   answer?: any;
+  createdAt: Timestamp;
+  endedAt?: Timestamp;
+  duration?: number; // in seconds
 }

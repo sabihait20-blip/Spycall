@@ -12,12 +12,11 @@ interface ChatWindowProps {
   conversation: Conversation;
   currentUser: FirebaseUser;
   onBack: () => void;
-  onCall: (type: 'audio' | 'video') => void;
 }
 
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 
-export default function ChatWindow({ conversation, currentUser, onBack, onCall }: ChatWindowProps) {
+export default function ChatWindow({ conversation, currentUser, onBack }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [otherUser, setOtherUser] = useState<UserProfile | null>(null);

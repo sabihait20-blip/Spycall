@@ -51,9 +51,12 @@
         "status": { "type": "string", "enum": ["ringing", "accepted", "rejected", "ended"] },
         "type": { "type": "string", "enum": ["audio", "video"] },
         "offer": { "type": "object" },
-        "answer": { "type": "object" }
+        "answer": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "endedAt": { "type": "string", "format": "date-time" },
+        "duration": { "type": "number" }
       },
-      "required": ["callerId", "receiverId", "status", "type"]
+      "required": ["callerId", "receiverId", "status", "type", "createdAt"]
     }
   },
   "firestore": {

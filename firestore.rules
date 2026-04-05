@@ -49,11 +49,14 @@ service cloud.firestore {
     }
 
     function isValidCall(data) {
-      return data.keys().hasAll(['callerId', 'receiverId', 'status', 'type']) &&
+      return data.keys().hasAll(['callerId', 'receiverId', 'status', 'type', 'createdAt']) &&
              data.callerId is string &&
              data.receiverId is string &&
              data.status in ['ringing', 'accepted', 'rejected', 'ended'] &&
-             data.type in ['audio', 'video'];
+             data.type in ['audio', 'video'] &&
+             data.createdAt is timestamp &&
+             (!('endedAt' in data) || data.endedAt is timestamp) &&
+             (!('duration' in data) || data.duration is number);
     }
 
     // ===============================================================
@@ -83,7 +86,7 @@ service cloud.firestore {
     match /calls/{id} {
       allow get, list: if isAuthenticated() && (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.receiverId);
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.callerId && isValidCall(request.resource.data);
-      allow update: if isAuthenticated() && (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.receiverId);
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.receiverId) && isValidCall(request.resource.data);
       
       match /callerCandidates/{candId} {
         allow read, write: if isAuthenticated();

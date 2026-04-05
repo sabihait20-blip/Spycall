@@ -80,7 +80,11 @@ export default function CallWindow({ call, currentUser, onEnd }: CallWindowProps
 
   const handleEndCall = async () => {
     try {
-      await updateDoc(doc(db, 'calls', call.id), { status: 'ended' });
+      await updateDoc(doc(db, 'calls', call.id), { 
+        status: 'ended',
+        endedAt: serverTimestamp(),
+        duration: callDuration
+      });
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `calls/${call.id}`);
     }

@@ -3,7 +3,7 @@ import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, onSnapshot, collection, query, where, getDocs, addDoc, updateDoc, orderBy, limit, getDocFromServer } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { LogIn, LogOut, MessageSquare, Phone, Video, Search, Send, User as UserIcon, ArrowLeft, PhoneCall, PhoneOff, X, AlertCircle } from 'lucide-react';
+import { LogIn, LogOut, MessageSquare, Phone, Video, Search, Send, User as UserIcon, ArrowLeft, PhoneCall, PhoneOff, X, AlertCircle, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 import { cn } from './lib/utils';
@@ -14,6 +14,7 @@ import { UserProfile, Conversation, Message, CallSession } from './types';
 import ChatList from './components/ChatList';
 import ChatWindow from './components/ChatWindow';
 import CallWindow from './components/CallWindow';
+import CallHistory from './components/CallHistory';
 
 export default function App() {
   const [user, loading, error] = useAuthState(auth);
@@ -25,6 +26,7 @@ export default function App() {
   const [nicknameInput, setNicknameInput] = useState('');
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showCallHistory, setShowCallHistory] = useState(false);
 
   useEffect(() => {
     async function testConnection() {
@@ -278,9 +280,18 @@ export default function App() {
               <span className="text-[10px] font-bold text-indigo-400 tracking-widest uppercase">{userProfile?.ipcallId}</span>
             </div>
           </div>
-          <button onClick={handleLogout} className="p-2.5 hover:bg-slate-800 rounded-2xl text-slate-400 transition-all active:scale-90">
-            <LogOut className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => setShowCallHistory(true)} 
+              className="p-2.5 hover:bg-slate-800 rounded-2xl text-slate-400 transition-all active:scale-90"
+              title="Call History"
+            >
+              <Clock className="w-5 h-5" />
+            </button>
+            <button onClick={handleLogout} className="p-2.5 hover:bg-slate-800 rounded-2xl text-slate-400 transition-all active:scale-90">
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </header>
 
         <ChatList 
@@ -293,14 +304,18 @@ export default function App() {
       {/* Main Content */}
       <div className={cn(
         "flex-1 flex flex-col h-full bg-slate-950",
-        !activeChat ? "hidden md:flex items-center justify-center" : "flex"
+        (!activeChat && !showCallHistory) ? "hidden md:flex items-center justify-center" : "flex"
       )}>
-        {activeChat ? (
+        {showCallHistory ? (
+          <CallHistory 
+            currentUser={user} 
+            onBack={() => setShowCallHistory(false)} 
+          />
+        ) : activeChat ? (
           <ChatWindow 
             conversation={activeChat} 
             currentUser={user} 
             onBack={() => setActiveChat(null)}
-            onCall={(type) => {}}
           />
         ) : (
           <div className="text-center p-8 max-w-md">
@@ -346,7 +361,11 @@ export default function App() {
               <button 
                 onClick={async () => {
                   try {
-                    await updateDoc(doc(db, 'calls', incomingCall.id), { status: 'rejected' });
+                    await updateDoc(doc(db, 'calls', incomingCall.id), { 
+                      status: 'rejected',
+                      endedAt: serverTimestamp(),
+                      duration: 0
+                    });
                     setIncomingCall(null);
                   } catch (e) {
                     handleFirestoreError(e, OperationType.UPDATE, `calls/${incomingCall.id}`);
