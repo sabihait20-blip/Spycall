@@ -128,8 +128,14 @@ export default function CallHistory({ currentUser, onBack }: CallHistoryProps) {
                 key={call.id}
                 className="bg-slate-900/50 border border-slate-800 p-4 rounded-3xl flex items-center gap-4 hover:bg-slate-900 transition-all group"
               >
-                <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-slate-500 group-hover:bg-slate-700 transition-colors">
-                  <UserIcon className="w-6 h-6" />
+                <div className={cn(
+                  "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors",
+                  isMissed ? "bg-rose-500/10 text-rose-500" : 
+                  isCaller ? "bg-indigo-500/10 text-indigo-400" : "bg-emerald-500/10 text-emerald-500"
+                )}>
+                  {isCaller ? <PhoneOutgoing className="w-6 h-6" /> : 
+                   isMissed ? <PhoneMissed className="w-6 h-6" /> : 
+                   <PhoneIncoming className="w-6 h-6" />}
                 </div>
                 
                 <div className="flex-1 min-w-0">
@@ -145,21 +151,14 @@ export default function CallHistory({ currentUser, onBack }: CallHistoryProps) {
                   <div className="flex items-center gap-3">
                     <div className={cn(
                       "flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider",
-                      isMissed ? "text-rose-500" : "text-emerald-500"
+                      isMissed ? "text-rose-500" : isCaller ? "text-indigo-400" : "text-emerald-500"
                     )}>
-                      {isCaller ? (
-                        <PhoneOutgoing className="w-3 h-3" />
-                      ) : isMissed ? (
-                        <PhoneMissed className="w-3 h-3" />
-                      ) : (
-                        <PhoneIncoming className="w-3 h-3" />
-                      )}
-                      {call.type} call
+                      {isCaller ? 'Outgoing' : isMissed ? 'Missed' : 'Incoming'}
                     </div>
                     <span className="text-slate-700">•</span>
                     <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                       <Clock className="w-3 h-3" />
-                      {formatDuration(call.duration)}
+                      {isMissed ? 'No answer' : formatDuration(call.duration)}
                     </div>
                   </div>
                 </div>
@@ -171,6 +170,14 @@ export default function CallHistory({ currentUser, onBack }: CallHistoryProps) {
             );
           })
         )}
+      </div>
+      
+      {/* WhatsApp-like Footer */}
+      <div className="p-4 text-center border-t border-slate-800 bg-slate-900/30">
+        <p className="text-[10px] text-slate-500 flex items-center justify-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-500/50"></span>
+          Your personal calls are end-to-end encrypted
+        </p>
       </div>
     </div>
   );

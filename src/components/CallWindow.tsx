@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { db } from '../lib/firebase';
 import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, getDoc } from 'firebase/firestore';
-import { PhoneOff, Mic, MicOff, Video, VideoOff, Volume2, VolumeX, User as UserIcon, Camera, Settings } from 'lucide-react';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, Volume2, VolumeX, User as UserIcon, Camera, Settings, MonitorUp, MonitorDown } from 'lucide-react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { CallSession, UserProfile } from '../types';
 import { cn } from '../lib/utils';
@@ -31,13 +31,51 @@ export default function CallWindow({ call, currentUser, onEnd }: CallWindowProps
   const [callDuration, setCallDuration] = useState(0);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [videoQuality, setVideoQuality] = useState<'low' | 'medium' | 'high'>('medium');
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const pc = useRef<RTCPeerConnection | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const screenStream = useRef<MediaStream | null>(null);
 
   const signalingCleanup = useRef<(() => void) | null>(null);
+
+  // ... (rest of the component logic remains the same)
+
+  const toggleScreenShare = async () => {
+    if (!isScreenSharing) {
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        screenStream.current = stream;
+        const videoTrack = stream.getVideoTracks()[0];
+        
+        // Replace video track in peer connection
+        const sender = pc.current?.getSenders().find(s => s.track?.kind === 'video');
+        if (sender) {
+          await sender.replaceTrack(videoTrack);
+        }
+        
+        setIsScreenSharing(true);
+        videoTrack.onended = () => toggleScreenShare();
+      } catch (err) {
+        console.error("Error starting screen share:", err);
+      }
+    } else {
+      // Revert to camera
+      const videoTrack = localStream?.getVideoTracks()[0];
+      if (videoTrack) {
+        const sender = pc.current?.getSenders().find(s => s.track?.kind === 'video');
+        if (sender) {
+          await sender.replaceTrack(videoTrack);
+        }
+      }
+      screenStream.current?.getTracks().forEach(track => track.stop());
+      setIsScreenSharing(false);
+    }
+  };
+
+  // ... (rest of the component)
 
   useEffect(() => {
     const otherId = call.callerId === currentUser.uid ? call.receiverId : call.callerId;
@@ -375,6 +413,16 @@ export default function CallWindow({ call, currentUser, onEnd }: CallWindowProps
               title={`Video Quality: ${videoQuality.toUpperCase()}`}
             >
               <Settings className="w-6 h-6" />
+            </button>
+            <button 
+              onClick={toggleScreenShare}
+              className={cn(
+                "p-5 rounded-2xl transition-all active:scale-90 border",
+                isScreenSharing ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-400" : "bg-white/5 border-white/10 hover:bg-white/10 text-white"
+              )}
+              title={isScreenSharing ? "Stop Screen Sharing" : "Start Screen Sharing"}
+            >
+              {isScreenSharing ? <MonitorDown className="w-6 h-6" /> : <MonitorUp className="w-6 h-6" />}
             </button>
           </>
         )}
