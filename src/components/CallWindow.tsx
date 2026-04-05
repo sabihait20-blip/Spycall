@@ -116,7 +116,7 @@ export default function CallWindow({ call, currentUser, onEnd }: CallWindowProps
               <UserIcon className="w-20 h-20 text-indigo-400 relative z-10" />
             </div>
             <h2 className="text-3xl font-bold mb-2 tracking-tight">{otherUser?.nickname || 'Connecting...'}</h2>
-            <p className="text-indigo-400 font-bold text-sm tracking-[0.3em] uppercase mb-4">{otherUser?.echoId}</p>
+            <p className="text-indigo-400 font-bold text-sm tracking-[0.3em] uppercase mb-4">{otherUser?.ipcallId}</p>
             <div className="bg-slate-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-slate-800">
               <p className="text-slate-300 font-mono text-lg">{formatDuration(callDuration)}</p>
             </div>

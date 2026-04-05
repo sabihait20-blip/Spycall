@@ -10,7 +10,7 @@ service cloud.firestore {
     // Fields:
     //   - uid: string (required)
     //   - nickname: string (required)
-    //   - echoId: string (required)
+    //   - ipcallId: string (required)
     //   - status: string (optional, enum: ['online', 'offline'])
     //   - lastSeen: timestamp (optional)
     //
@@ -32,10 +32,11 @@ service cloud.firestore {
     }
 
     function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'nickname', 'echoId']) &&
+      return data.keys().hasAll(['uid', 'nickname', 'nickname_lowercase', 'ipcallId']) &&
              data.uid is string && data.uid.size() > 0 &&
              data.nickname is string && data.nickname.size() > 0 &&
-             data.echoId is string && data.echoId.size() > 0;
+             data.nickname_lowercase is string && data.nickname_lowercase == data.nickname.lower() &&
+             data.ipcallId is string && data.ipcallId.size() > 0;
     }
 
     function isValidMessage(data) {

@@ -3,7 +3,7 @@ import { Timestamp } from 'firebase/firestore';
 export interface UserProfile {
   uid: string;
   nickname: string;
-  echoId: string;
+  ipcallId: string;
   status?: 'online' | 'offline';
   lastSeen?: Timestamp;
 }

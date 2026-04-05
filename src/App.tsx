@@ -154,7 +154,7 @@ export default function App() {
   const handleSetupProfile = async () => {
     if (!user || !nicknameInput.trim()) return;
     
-    const echoId = `Echo-${Math.floor(1000 + Math.random() * 9000)}`;
+    const ipcallId = `IPCall-${Math.floor(1000 + Math.random() * 9000)}`;
     const userRef = doc(db, 'users', user.uid);
     
     try {
@@ -162,7 +162,7 @@ export default function App() {
         uid: user.uid,
         nickname: nicknameInput.trim(),
         nickname_lowercase: nicknameInput.trim().toLowerCase(),
-        echoId: echoId,
+        ipcallId: ipcallId,
         status: 'online',
         lastSeen: serverTimestamp(),
       });
@@ -208,7 +208,7 @@ export default function App() {
           <div className="bg-indigo-500/20 p-5 rounded-3xl mb-6">
             <PhoneCall className="w-12 h-12 text-indigo-400" />
           </div>
-          <h1 className="text-3xl font-bold mb-2 tracking-tight">EchoPrivate</h1>
+          <h1 className="text-3xl font-bold mb-2 tracking-tight">IPCallPrivate</h1>
           <p className="text-slate-400 text-center mb-8 text-sm">Secure, anonymous, and private communication.</p>
           <button 
             onClick={handleLogin}
@@ -275,7 +275,7 @@ export default function App() {
             </div>
             <div className="flex flex-col">
               <span className="font-bold text-slate-100 truncate max-w-[120px]">{userProfile?.nickname}</span>
-              <span className="text-[10px] font-bold text-indigo-400 tracking-widest uppercase">{userProfile?.echoId}</span>
+              <span className="text-[10px] font-bold text-indigo-400 tracking-widest uppercase">{userProfile?.ipcallId}</span>
             </div>
           </div>
           <button onClick={handleLogout} className="p-2.5 hover:bg-slate-800 rounded-2xl text-slate-400 transition-all active:scale-90">
@@ -307,8 +307,8 @@ export default function App() {
             <div className="bg-indigo-500/10 p-8 rounded-[2.5rem] inline-block mb-6 border border-indigo-500/20">
               <PhoneCall className="w-20 h-20 text-indigo-500" />
             </div>
-            <h2 className="text-3xl font-bold text-slate-100 mb-3">EchoPrivate Secure</h2>
-            <p className="text-slate-400 leading-relaxed">Your calls and messages are end-to-end encrypted. Search for an Echo ID to start a private session.</p>
+            <h2 className="text-3xl font-bold text-slate-100 mb-3">IPCallPrivate Secure</h2>
+            <p className="text-slate-400 leading-relaxed">Your calls and messages are end-to-end encrypted. Search for an IPCall ID to start a private session.</p>
           </div>
         )}
       </div>

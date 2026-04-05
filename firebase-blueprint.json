@@ -7,11 +7,12 @@
       "properties": {
         "uid": { "type": "string" },
         "nickname": { "type": "string" },
-        "echoId": { "type": "string" },
+        "nickname_lowercase": { "type": "string" },
+        "ipcallId": { "type": "string" },
         "status": { "type": "string", "enum": ["online", "offline"] },
         "lastSeen": { "type": "string", "format": "date-time" }
       },
-      "required": ["uid", "nickname", "echoId"]
+      "required": ["uid", "nickname", "nickname_lowercase", "ipcallId"]
     },
     "Conversation": {
       "title": "Conversation",

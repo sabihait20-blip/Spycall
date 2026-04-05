@@ -1,4 +1,4 @@
-# EchoPrivate Secure - Netlify Deployment Guide
+# IPCallPrivate Secure - Netlify Deployment Guide
 
 This app is ready to be deployed to Netlify.
 

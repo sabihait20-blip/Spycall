@@ -67,10 +67,10 @@ export default function ChatList({ currentUser, onSelectChat, activeChatId }: Ch
     setIsSearching(true);
     setSearchResults([]);
     try {
-      // Search by Echo ID (Exact)
-      const echoQuery = query(
+      // Search by IPCall ID (Exact)
+      const ipcallQuery = query(
         collection(db, 'users'),
-        where('echoId', '==', term)
+        where('ipcallId', '==', term)
       );
       
       // Search by Nickname (Prefix match, case-insensitive)
@@ -80,14 +80,14 @@ export default function ChatList({ currentUser, onSelectChat, activeChatId }: Ch
         where('nickname_lowercase', '<=', term.toLowerCase() + '\uf8ff')
       );
 
-      const [echoSnap, nickSnap] = await Promise.all([
-        getDocs(echoQuery),
+      const [ipcallSnap, nickSnap] = await Promise.all([
+        getDocs(ipcallQuery),
         getDocs(nicknameQuery)
       ]);
 
       const resultsMap = new Map<string, UserProfile>();
       
-      echoSnap.docs.forEach(doc => {
+      ipcallSnap.docs.forEach(doc => {
         const data = doc.data() as UserProfile;
         if (data.uid !== currentUser.uid) resultsMap.set(data.uid, data);
       });
@@ -138,7 +138,7 @@ export default function ChatList({ currentUser, onSelectChat, activeChatId }: Ch
         <form onSubmit={handleSearch} className="relative">
           <input 
             type="text" 
-            placeholder="Search Nickname or Echo ID" 
+            placeholder="Search Nickname or IPCall ID" 
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -178,7 +178,7 @@ export default function ChatList({ currentUser, onSelectChat, activeChatId }: Ch
                 </div>
                 <div className="text-left">
                   <div className="font-bold text-slate-100">{user.nickname}</div>
-                  <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">{user.echoId}</div>
+                  <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">{user.ipcallId}</div>
                 </div>
                 <Plus className="ml-auto w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />
               </button>
@@ -193,7 +193,7 @@ export default function ChatList({ currentUser, onSelectChat, activeChatId }: Ch
               <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Search className="w-6 h-6 text-slate-600" />
               </div>
-              <p className="text-sm text-slate-500">No active sessions. Search for an Echo ID to begin.</p>
+              <p className="text-sm text-slate-500">No active sessions. Search for an IPCall ID to begin.</p>
             </div>
           ) : (
             conversations.map(conv => {

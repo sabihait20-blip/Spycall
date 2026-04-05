@@ -1,5 +1,5 @@
 {
-  "name": "EchoPrivate Secure",
-  "description": "A secure, anonymous PWA for private messaging and calling. Stay hidden with Echo IDs and end-to-end private sessions.",
+  "name": "IPCallPrivate Secure",
+  "description": "A secure, anonymous PWA for private messaging and calling. Stay hidden with IPCall IDs and end-to-end private sessions.",
   "requestFramePermissions": ["camera", "microphone", "geolocation"]
 }

@@ -1,6 +1,6 @@
 {
-  "name": "EchoPrivate Secure",
-  "short_name": "EchoPrivate",
+  "name": "IPCallPrivate Secure",
+  "short_name": "IPCallPrivate",
   "description": "Secure, anonymous, and private communication.",
   "start_url": "/",
   "display": "standalone",
@@ -8,12 +8,12 @@
   "theme_color": "#4f46e5",
   "icons": [
     {
-      "src": "https://picsum.photos/seed/echo/192/192",
+      "src": "https://picsum.photos/seed/ipcall/192/192",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://picsum.photos/seed/echo/512/512",
+      "src": "https://picsum.photos/seed/ipcall/512/512",
       "sizes": "512x512",
       "type": "image/png"
     }

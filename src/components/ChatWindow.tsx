@@ -112,7 +112,7 @@ export default function ChatWindow({ conversation, currentUser, onBack, onCall }
           <div className="flex flex-col">
             <span className="font-bold text-slate-100 leading-tight">{otherUser?.nickname || 'Connecting...'}</span>
             <span className="text-[10px] text-indigo-400 uppercase tracking-widest font-bold">
-              {otherUser?.echoId}
+              {otherUser?.ipcallId}
             </span>
           </div>
         </div>

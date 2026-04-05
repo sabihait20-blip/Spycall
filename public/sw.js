@@ -1,4 +1,4 @@
-const CACHE_NAME = 'echo-private-v1';
+const CACHE_NAME = 'ipcall-private-v1';
 const ASSETS = [
   '/',
   '/index.html',
