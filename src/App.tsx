@@ -276,7 +276,25 @@ export default function App() {
               <UserIcon className="w-6 h-6" />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-slate-100 truncate max-w-[120px]">{userProfile?.nickname}</span>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="text" 
+                  value={userProfile?.nickname || ''}
+                  onChange={async (e) => {
+                    const newNickname = e.target.value;
+                    if (!user || !newNickname.trim()) return;
+                    try {
+                      await updateDoc(doc(db, 'users', user.uid), {
+                        nickname: newNickname.trim(),
+                        nickname_lowercase: newNickname.trim().toLowerCase(),
+                      });
+                    } catch (e) {
+                      handleFirestoreError(e, OperationType.UPDATE, `users/${user.uid}`);
+                    }
+                  }}
+                  className="font-bold text-slate-100 bg-transparent border-none p-0 focus:ring-0 truncate max-w-[120px]"
+                />
+              </div>
               <span className="text-[10px] font-bold text-indigo-400 tracking-widest uppercase">{userProfile?.ipcallId}</span>
             </div>
           </div>
