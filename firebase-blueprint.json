@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "nickname": { "type": "string" },
+        "echoId": { "type": "string" },
+        "status": { "type": "string", "enum": ["online", "offline"] },
+        "lastSeen": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "nickname", "echoId"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "A chat conversation between two users",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "lastMessage": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["participants", "updatedAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A message within a conversation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "conversationId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "type": { "type": "string", "enum": ["text", "call"] }
+      },
+      "required": ["conversationId", "senderId", "text", "createdAt"]
+    },
+    "Call": {
+      "title": "Call",
+      "description": "A WebRTC call session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "callerId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "status": { "type": "string", "enum": ["ringing", "accepted", "rejected", "ended"] },
+        "type": { "type": "string", "enum": ["audio", "video"] },
+        "offer": { "type": "object" },
+        "answer": { "type": "object" }
+      },
+      "required": ["callerId", "receiverId", "status", "type"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/conversations/{id}": {
+      "schema": "Conversation",
+      "description": "Chat conversations"
+    },
+    "/conversations/{id}/messages/{msgId}": {
+      "schema": "Message",
+      "description": "Messages in a conversation"
+    },
+    "/calls/{id}": {
+      "schema": "Call",
+      "description": "Active and past calls"
+    }
+  }
+}

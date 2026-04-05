@@ -1,0 +1,95 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {uid}
+    // Fields:
+    //   - uid: string (required)
+    //   - nickname: string (required)
+    //   - echoId: string (required)
+    //   - status: string (optional, enum: ['online', 'offline'])
+    //   - lastSeen: timestamp (optional)
+    //
+    // ... (other collections)
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isParticipant(participants) {
+      return isAuthenticated() && participants.hasAny([request.auth.uid]);
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'nickname', 'echoId']) &&
+             data.uid is string && data.uid.size() > 0 &&
+             data.nickname is string && data.nickname.size() > 0 &&
+             data.echoId is string && data.echoId.size() > 0;
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['conversationId', 'senderId', 'text', 'createdAt', 'type']) &&
+             data.conversationId is string &&
+             data.senderId == request.auth.uid &&
+             data.text is string &&
+             data.createdAt is timestamp &&
+             data.type in ['text', 'call'];
+    }
+
+    function isValidCall(data) {
+      return data.keys().hasAll(['callerId', 'receiverId', 'status', 'type']) &&
+             data.callerId is string &&
+             data.receiverId is string &&
+             data.status in ['ringing', 'accepted', 'rejected', 'ended'] &&
+             data.type in ['audio', 'video'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{uid} {
+      allow get, list: if isAuthenticated();
+      allow create: if isOwner(uid) && isValidUser(request.resource.data);
+      // Relaxed update to ensure it doesn't fail on partial updates if the merged doc is valid
+      allow update: if isOwner(uid) && 
+                    (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'lastSeen']) || 
+                     isValidUser(request.resource.data));
+    }
+
+    match /conversations/{id} {
+      allow get, list: if isAuthenticated() && isParticipant(resource.data.participants);
+      allow create: if isAuthenticated() && isParticipant(request.resource.data.participants);
+      allow update: if isAuthenticated() && isParticipant(resource.data.participants);
+
+      match /messages/{msgId} {
+        allow get, list: if isAuthenticated() && isParticipant(get(/databases/$(database)/documents/conversations/$(id)).data.participants);
+        allow create: if isAuthenticated() && isParticipant(get(/databases/$(database)/documents/conversations/$(id)).data.participants) && isValidMessage(request.resource.data);
+      }
+    }
+
+    match /calls/{id} {
+      allow get, list: if isAuthenticated() && (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.receiverId);
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.callerId && isValidCall(request.resource.data);
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.receiverId);
+      
+      match /callerCandidates/{candId} {
+        allow read, write: if isAuthenticated();
+      }
+      match /receiverCandidates/{candId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+  }
+}
