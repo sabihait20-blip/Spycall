@@ -19,9 +19,10 @@ export interface Message {
   id: string;
   conversationId: string;
   senderId: string;
-  text: string;
+  text?: string;
+  audioUrl?: string;
   createdAt: Timestamp;
-  type: 'text' | 'call';
+  type: 'text' | 'call' | 'audio';
 }
 
 export interface CallSession {
