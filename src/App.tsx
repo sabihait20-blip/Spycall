@@ -24,6 +24,7 @@ export default function App() {
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [nicknameInput, setNicknameInput] = useState('');
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     async function testConnection() {
@@ -47,10 +48,12 @@ export default function App() {
           const data = doc.data() as UserProfile;
           setUserProfile(data);
           setShowProfileSetup(false);
-          // Update online status
-          updateDoc(userRef, { status: 'online', lastSeen: serverTimestamp() }).catch(e => {
-            handleFirestoreError(e, OperationType.UPDATE, `users/${user.uid}`);
-          });
+          // Update online status only if needed
+          if (data.status !== 'online') {
+            updateDoc(userRef, { status: 'online', lastSeen: serverTimestamp() }).catch(e => {
+              handleFirestoreError(e, OperationType.UPDATE, `users/${user.uid}`);
+            });
+          }
         } else {
           setShowProfileSetup(true);
         }
@@ -115,22 +118,22 @@ export default function App() {
         unsubscribeIncoming();
         unsubscribeOutgoing();
         unsubscribeAccepted();
-        if (userProfile) {
-          updateDoc(userRef, { status: 'offline', lastSeen: serverTimestamp() }).catch(e => {
-            // Silently fail on cleanup or log
-            console.warn('Cleanup status update failed', e);
-          });
-        }
       };
     }
   }, [user]);
 
   const handleLogin = async () => {
+    if (isLoggingIn) return;
+    setIsLoggingIn(true);
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-    } catch (err) {
-      console.error('Login failed:', err);
+    } catch (err: any) {
+      if (err.code !== 'auth/cancelled-popup-request') {
+        console.error('Login failed:', err);
+      }
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -158,6 +161,7 @@ export default function App() {
       await setDoc(userRef, {
         uid: user.uid,
         nickname: nicknameInput.trim(),
+        nickname_lowercase: nicknameInput.trim().toLowerCase(),
         echoId: echoId,
         status: 'online',
         lastSeen: serverTimestamp(),
@@ -208,10 +212,17 @@ export default function App() {
           <p className="text-slate-400 text-center mb-8 text-sm">Secure, anonymous, and private communication.</p>
           <button 
             onClick={handleLogin}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-600/20 active:scale-95"
+            disabled={isLoggingIn}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-800 disabled:text-slate-500 text-white font-semibold py-4 px-6 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-600/20 active:scale-95"
           >
-            <LogIn className="w-5 h-5" />
-            Start Private Session
+            {isLoggingIn ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+            ) : (
+              <>
+                <LogIn className="w-5 h-5" />
+                Start Private Session
+              </>
+            )}
           </button>
         </motion.div>
       </div>

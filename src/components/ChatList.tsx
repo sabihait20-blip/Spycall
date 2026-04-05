@@ -61,21 +61,43 @@ export default function ChatList({ currentUser, onSelectChat, activeChatId }: Ch
 
   const handleSearch = async (e: FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
+    const term = searchQuery.trim();
+    if (!term) return;
 
     setIsSearching(true);
+    setSearchResults([]);
     try {
-      const q = query(
+      // Search by Echo ID (Exact)
+      const echoQuery = query(
         collection(db, 'users'),
-        where('echoId', '==', searchQuery.trim())
+        where('echoId', '==', term)
+      );
+      
+      // Search by Nickname (Prefix match, case-insensitive)
+      const nicknameQuery = query(
+        collection(db, 'users'),
+        where('nickname_lowercase', '>=', term.toLowerCase()),
+        where('nickname_lowercase', '<=', term.toLowerCase() + '\uf8ff')
       );
 
-      const snapshot = await getDocs(q);
-      const results = snapshot.docs
-        .map(doc => doc.data() as UserProfile)
-        .filter(u => u.uid !== currentUser.uid);
+      const [echoSnap, nickSnap] = await Promise.all([
+        getDocs(echoQuery),
+        getDocs(nicknameQuery)
+      ]);
+
+      const resultsMap = new Map<string, UserProfile>();
       
-      setSearchResults(results);
+      echoSnap.docs.forEach(doc => {
+        const data = doc.data() as UserProfile;
+        if (data.uid !== currentUser.uid) resultsMap.set(data.uid, data);
+      });
+
+      nickSnap.docs.forEach(doc => {
+        const data = doc.data() as UserProfile;
+        if (data.uid !== currentUser.uid) resultsMap.set(data.uid, data);
+      });
+      
+      setSearchResults(Array.from(resultsMap.values()));
     } catch (e) {
       handleFirestoreError(e, OperationType.LIST, 'users');
     } finally {
@@ -116,16 +138,32 @@ export default function ChatList({ currentUser, onSelectChat, activeChatId }: Ch
         <form onSubmit={handleSearch} className="relative">
           <input 
             type="text" 
-            placeholder="Search Echo ID (e.g. Echo-1234)" 
+            placeholder="Search Nickname or Echo ID" 
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-800 border-slate-700 rounded-2xl py-3.5 pl-11 pr-4 focus:ring-2 focus:ring-indigo-500 transition-all text-sm text-white placeholder:text-slate-500"
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              if (!e.target.value.trim()) {
+                setSearchResults([]);
+              }
+            }}
+            className="w-full bg-slate-800 border-slate-700 rounded-2xl py-3.5 pl-11 pr-12 focus:ring-2 focus:ring-indigo-500 transition-all text-sm text-white placeholder:text-slate-500"
           />
           <Search className="absolute left-4 top-3.5 w-4 h-4 text-slate-500" />
+          {isSearching && (
+            <div className="absolute right-4 top-3.5">
+              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-indigo-500"></div>
+            </div>
+          )}
         </form>
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
+        {searchQuery.trim() && !isSearching && searchResults.length === 0 && (
+          <div className="px-5 py-4 text-center">
+            <p className="text-xs text-slate-500 italic">No users found with "{searchQuery}"</p>
+          </div>
+        )}
+
         {searchResults.length > 0 && (
           <div className="px-5 mb-6">
             <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Search Results</h3>
