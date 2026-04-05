@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, onSnapshot, collection, query, where, getDocs, addDoc, updateDoc, orderBy, limit, getDocFromServer } from 'firebase/firestore';
@@ -27,6 +27,25 @@ export default function App() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showCallHistory, setShowCallHistory] = useState(false);
+  const ringtoneRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    ringtoneRef.current = new Audio('https://actions.google.com/sounds/v1/alarms/phone_ringing.ogg');
+    ringtoneRef.current.loop = true;
+    return () => {
+      ringtoneRef.current?.pause();
+      ringtoneRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (incomingCall) {
+      ringtoneRef.current?.play().catch(e => console.error("Ringtone playback failed:", e));
+    } else {
+      ringtoneRef.current?.pause();
+      if (ringtoneRef.current) ringtoneRef.current.currentTime = 0;
+    }
+  }, [incomingCall]);
 
   useEffect(() => {
     async function testConnection() {

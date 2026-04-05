@@ -403,18 +403,6 @@ export default function CallWindow({ call, currentUser, onEnd }: CallWindowProps
               <Camera className="w-6 h-6" />
             </button>
             <button 
-              onClick={() => {
-                const qualities: ('low' | 'medium' | 'high')[] = ['low', 'medium', 'high'];
-                const nextQuality = qualities[(qualities.indexOf(videoQuality) + 1) % qualities.length];
-                setVideoQuality(nextQuality);
-                setupWebRTC(facingMode, nextQuality);
-              }}
-              className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-all active:scale-90"
-              title={`Video Quality: ${videoQuality.toUpperCase()}`}
-            >
-              <Settings className="w-6 h-6" />
-            </button>
-            <button 
               onClick={toggleScreenShare}
               className={cn(
                 "p-5 rounded-2xl transition-all active:scale-90 border",
