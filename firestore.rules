@@ -75,11 +75,12 @@ service cloud.firestore {
     match /conversations/{id} {
       allow get, list: if isAuthenticated() && isParticipant(resource.data.participants);
       allow create: if isAuthenticated() && isParticipant(request.resource.data.participants);
-      allow update: if isAuthenticated() && isParticipant(resource.data.participants);
+      allow update, delete: if isAuthenticated() && isParticipant(resource.data.participants);
 
       match /messages/{msgId} {
         allow get, list: if isAuthenticated() && isParticipant(get(/databases/$(database)/documents/conversations/$(id)).data.participants);
         allow create: if isAuthenticated() && isParticipant(get(/databases/$(database)/documents/conversations/$(id)).data.participants) && isValidMessage(request.resource.data);
+        allow delete: if isAuthenticated() && isParticipant(get(/databases/$(database)/documents/conversations/$(id)).data.participants);
       }
     }
 

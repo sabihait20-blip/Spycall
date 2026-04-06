@@ -1,7 +1,7 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent, MouseEvent } from 'react';
 import { db } from '../lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
-import { Search, User as UserIcon, Plus } from 'lucide-react';
+import { collection, query, where, onSnapshot, orderBy, getDocs, addDoc, serverTimestamp, doc, getDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { Search, User as UserIcon, Plus, Trash2 } from 'lucide-react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import { Conversation, UserProfile } from '../types';
@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 
 interface ChatListProps {
   currentUser: FirebaseUser;
-  onSelectChat: (chat: Conversation) => void;
+  onSelectChat: (chat: Conversation | null) => void;
   activeChatId?: string;
 }
 
@@ -132,6 +132,35 @@ export default function ChatList({ currentUser, onSelectChat, activeChatId }: Ch
     }
   };
 
+  const deleteConversation = async (e: MouseEvent, convId: string) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this conversation? This will remove it from your list.')) return;
+
+    try {
+      // Delete the conversation document
+      await deleteDoc(doc(db, 'conversations', convId));
+      
+      // If it's the active chat, clear it
+      if (activeChatId === convId) {
+        onSelectChat(null);
+      }
+
+      // Also attempt to delete messages in this conversation
+      const messagesQuery = query(collection(db, 'conversations', convId, 'messages'));
+      const messagesSnap = await getDocs(messagesQuery);
+      
+      if (!messagesSnap.empty) {
+        const batch = writeBatch(db);
+        messagesSnap.docs.forEach(msgDoc => {
+          batch.delete(msgDoc.ref);
+        });
+        await batch.commit();
+      }
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, `conversations/${convId}`);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden bg-slate-900">
       <div className="p-5">
@@ -201,37 +230,45 @@ export default function ChatList({ currentUser, onSelectChat, activeChatId }: Ch
               const otherUser = otherId ? otherUsers[otherId] : null;
 
               return (
-                <button 
-                  key={conv.id}
-                  onClick={() => onSelectChat(conv)}
-                  className={cn(
-                    "w-full flex items-center gap-4 p-4 rounded-2xl transition-all mb-1 group",
-                    activeChatId === conv.id 
-                      ? "bg-indigo-600/10 border border-indigo-600/20 shadow-lg shadow-indigo-600/5" 
-                      : "hover:bg-slate-800/50 border border-transparent"
-                  )}
-                >
-                  <div className="relative">
-                    <div className={cn(
-                      "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors",
-                      activeChatId === conv.id ? "bg-indigo-500 text-white" : "bg-slate-800 text-slate-500 group-hover:bg-slate-700"
-                    )}>
-                      <UserIcon className="w-6 h-6" />
-                    </div>
-                    {otherUser?.status === 'online' && (
-                      <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-slate-900 rounded-full"></div>
+                <div key={conv.id} className="relative group">
+                  <button 
+                    onClick={() => onSelectChat(conv)}
+                    className={cn(
+                      "w-full flex items-center gap-4 p-4 rounded-2xl transition-all mb-1",
+                      activeChatId === conv.id 
+                        ? "bg-indigo-600/10 border border-indigo-600/20 shadow-lg shadow-indigo-600/5" 
+                        : "hover:bg-slate-800/50 border border-transparent"
                     )}
-                  </div>
-                  <div className="flex-1 text-left overflow-hidden">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-bold text-slate-100 truncate">{otherUser?.nickname || 'Connecting...'}</span>
-                      <span className="text-[10px] font-bold text-slate-500">
-                        {conv.updatedAt ? format(conv.updatedAt.toDate(), 'HH:mm') : ''}
-                      </span>
+                  >
+                    <div className="relative">
+                      <div className={cn(
+                        "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors",
+                        activeChatId === conv.id ? "bg-indigo-500 text-white" : "bg-slate-800 text-slate-500"
+                      )}>
+                        <UserIcon className="w-6 h-6" />
+                      </div>
+                      {otherUser?.status === 'online' && (
+                        <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-slate-900 rounded-full"></div>
+                      )}
                     </div>
-                    <p className="text-xs text-slate-500 truncate font-medium">{conv.lastMessage}</p>
-                  </div>
-                </button>
+                    <div className="flex-1 text-left overflow-hidden pr-8">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-bold text-slate-100 truncate">{otherUser?.nickname || 'Connecting...'}</span>
+                        <span className="text-[10px] font-bold text-slate-500">
+                          {conv.updatedAt ? format(conv.updatedAt.toDate(), 'HH:mm') : ''}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 truncate font-medium">{conv.lastMessage}</p>
+                    </div>
+                  </button>
+                  <button 
+                    onClick={(e) => deleteConversation(e, conv.id)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500/10 rounded-xl"
+                    title="Delete Session"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               );
             })
           )}
