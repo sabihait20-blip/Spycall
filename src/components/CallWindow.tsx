@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { db } from '../lib/firebase';
 import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, getDoc } from 'firebase/firestore';
-import { PhoneOff, Mic, MicOff, Video, VideoOff, Volume2, VolumeX, User as UserIcon, Camera, Settings, MonitorUp, MonitorDown } from 'lucide-react';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, Volume2, VolumeX, User as UserIcon, Camera, Settings, MonitorUp, MonitorDown, MoreVertical } from 'lucide-react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { CallSession, UserProfile } from '../types';
 import { cn } from '../lib/utils';
