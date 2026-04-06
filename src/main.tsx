@@ -4,13 +4,18 @@ import App from './App.tsx';
 import './index.css';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </StrictMode>,
-);
+try {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </StrictMode>,
+  );
+} catch (error) {
+  console.error('Failed to render app:', error);
+  document.getElementById('root')!.innerHTML = '<div style="color: white; padding: 20px;">Failed to load application. Please try refreshing the page.</div>';
+}
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

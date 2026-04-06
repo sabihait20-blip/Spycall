@@ -201,16 +201,16 @@ export default function CallWindow({ call, currentUser, onEnd }: CallWindowProps
       // Wait for offer if not present
       const unsubscribeOffer = onSnapshot(callDoc, async (snapshot) => {
         const data = snapshot.data();
-        if (!pc.current?.currentRemoteDescription && data?.offer) {
-          await pc.current?.setRemoteDescription(new RTCSessionDescription(data.offer));
+        if (pc.current && !pc.current.currentRemoteDescription && data?.offer) {
+          await pc.current.setRemoteDescription(new RTCSessionDescription(data.offer));
           
-          const answerDescription = await pc.current?.createAnswer();
-          await pc.current?.setLocalDescription(answerDescription);
+          const answerDescription = await pc.current.createAnswer();
+          await pc.current.setLocalDescription(answerDescription);
 
           await updateDoc(callDoc, { 
             answer: {
-              type: answerDescription?.type,
-              sdp: answerDescription?.sdp,
+              type: answerDescription.type,
+              sdp: answerDescription.sdp,
             }
           });
         }
