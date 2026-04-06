@@ -91,8 +91,8 @@ export default function ChatWindow({ conversation, currentUser, onBack }: ChatWi
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const audioRef = ref(storage, `audio/${conversation.id}/${Date.now()}.webm`);
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/mp4' });
+        const audioRef = ref(storage, `audio/${conversation.id}/${Date.now()}.mp4`);
         await uploadBytes(audioRef, audioBlob);
         const audioUrl = await getDownloadURL(audioRef);
 

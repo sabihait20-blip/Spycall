@@ -353,74 +353,56 @@ export default function CallWindow({ call, currentUser, onEnd }: CallWindowProps
       </div>
 
       {/* Controls */}
-      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-4 md:gap-8 bg-slate-900/80 backdrop-blur-2xl p-6 md:p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+      <div className="absolute bottom-8 left-4 right-4 md:bottom-16 md:left-1/2 md:-translate-x-1/2 flex items-center justify-center gap-6 md:gap-8 bg-slate-900/90 backdrop-blur-2xl p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] border border-white/10 shadow-2xl">
         <button 
           onClick={toggleMute}
           className={cn(
-            "p-5 rounded-2xl transition-all active:scale-90 border",
-            isMuted ? "bg-rose-500/20 border-rose-500/50 text-rose-400" : "bg-white/5 border-white/10 hover:bg-white/10 text-white"
+            "p-4 md:p-5 rounded-full transition-all active:scale-90",
+            isMuted ? "bg-rose-500/20 text-rose-400" : "bg-white/10 text-white"
           )}
           title={isMuted ? "Unmute" : "Mute"}
         >
-          {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+          {isMuted ? <MicOff className="w-6 h-6 md:w-7 md:h-7" /> : <Mic className="w-6 h-6 md:w-7 md:h-7" />}
         </button>
 
         {call.type === 'video' && (
           <button 
             onClick={toggleVideo}
             className={cn(
-              "p-5 rounded-2xl transition-all active:scale-90 border",
-              isVideoOff ? "bg-rose-500/20 border-rose-500/50 text-rose-400" : "bg-white/5 border-white/10 hover:bg-white/10 text-white"
+              "p-4 md:p-5 rounded-full transition-all active:scale-90",
+              isVideoOff ? "bg-rose-500/20 text-rose-400" : "bg-white/10 text-white"
             )}
             title={isVideoOff ? "Turn Video On" : "Turn Video Off"}
           >
-            {isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
+            {isVideoOff ? <VideoOff className="w-6 h-6 md:w-7 md:h-7" /> : <Video className="w-6 h-6 md:w-7 md:h-7" />}
           </button>
         )}
 
         <button 
           onClick={toggleLoudspeaker}
           className={cn(
-            "p-5 rounded-2xl transition-all active:scale-90 border",
-            !isLoudspeaker ? "bg-rose-500/20 border-rose-500/50 text-rose-400" : "bg-white/5 border-white/10 hover:bg-white/10 text-white"
+            "p-4 md:p-5 rounded-full transition-all active:scale-90",
+            !isLoudspeaker ? "bg-rose-500/20 text-rose-400" : "bg-white/10 text-white"
           )}
-          title={isLoudspeaker ? "Switch to Earpiece (Simulated)" : "Switch to Loudspeaker"}
+          title={isLoudspeaker ? "Switch to Earpiece" : "Switch to Loudspeaker"}
         >
-          {isLoudspeaker ? <Volume2 className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
+          {isLoudspeaker ? <Volume2 className="w-6 h-6 md:w-7 md:h-7" /> : <VolumeX className="w-6 h-6 md:w-7 md:h-7" />}
         </button>
-
-        {call.type === 'video' && (
-          <>
-            <button 
-              onClick={() => {
-                const newMode = facingMode === 'user' ? 'environment' : 'user';
-                setFacingMode(newMode);
-                setupWebRTC(newMode, videoQuality);
-              }}
-              className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-all active:scale-90"
-              title="Switch Camera"
-            >
-              <Camera className="w-6 h-6" />
-            </button>
-            <button 
-              onClick={toggleScreenShare}
-              className={cn(
-                "p-5 rounded-2xl transition-all active:scale-90 border",
-                isScreenSharing ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-400" : "bg-white/5 border-white/10 hover:bg-white/10 text-white"
-              )}
-              title={isScreenSharing ? "Stop Screen Sharing" : "Start Screen Sharing"}
-            >
-              {isScreenSharing ? <MonitorDown className="w-6 h-6" /> : <MonitorUp className="w-6 h-6" />}
-            </button>
-          </>
-        )}
 
         <button 
           onClick={handleEndCall}
-          className="p-7 bg-rose-600 hover:bg-rose-700 text-white rounded-[2rem] transition-all shadow-xl shadow-rose-600/20 active:scale-90"
+          className="p-5 md:p-6 bg-rose-600 hover:bg-rose-700 text-white rounded-full transition-all shadow-xl shadow-rose-600/20 active:scale-90"
           title="End Call"
         >
-          <PhoneOff className="w-8 h-8" />
+          <PhoneOff className="w-7 h-7 md:w-8 md:h-8" />
+        </button>
+
+        <button 
+          onClick={() => {}} // Placeholder for menu
+          className="p-4 md:p-5 rounded-full bg-white/10 text-white transition-all active:scale-90"
+          title="More Options"
+        >
+          <MoreVertical className="w-6 h-6 md:w-7 md:h-7" />
         </button>
       </div>
 
